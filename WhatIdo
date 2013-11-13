@@ -1,0 +1,4 @@
+add script: setenv
+add drivers/hello
+add asix driver
+config spi dev
