@@ -12,20 +12,20 @@ obj-				:=
 
 # Core support for S5PV210 system
 
-obj-$(CONFIG_CPU_S5PV210)	+= cpu.o init.o clock.o gpio.o dma.o pd.o irq-eint-group.o irq-eint.o
+obj-$(CONFIG_CPU_S5PV210)	+= cpu.o init.o clock.o gpio.o dma.o pd.o irq-eint-group.o irq-eint.o button-smdkv210.o
 
 # machine support
 
-obj-$(CONFIG_MACH_SMDKV210)	+= mach-smdkv210.o
+obj-$(CONFIG_MACH_SMDKV210)	+= mach-smdkv210.o 
 obj-$(CONFIG_MACH_SMDKC110)	+= mach-smdkc110.o
 
-obj-$(CONFIG_S5PV210_PM)	+= pm.o
+obj-$(CONFIG_S5PV210_PM)	+= pm.o 
 obj-$(CONFIG_S5PV210_SETUP_SDHCI)       += setup-sdhci.o
 
 obj-$(CONFIG_CPU_FREQ_S5PV210)	+= cpu-freq.o
 
 # Device setup - ADC
-obj-$(CONFIG_S5PV210_ADC)        += adc.o
+obj-$(CONFIG_S5P_ADC)        += adc.o
 
 obj-$(CONFIG_S5PV210_SETUP_FB_S3C)	+= setup-fb.o
 obj-$(CONFIG_S5PV210_SETUP_FIMC0)	+= setup-fimc0.o

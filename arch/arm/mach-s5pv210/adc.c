@@ -104,7 +104,7 @@ unsigned int s3c_adc_convert(void)
 	unsigned long data0;
 	unsigned long data1;
 
-	writel((adc_port & 0x7), base_addr + S3C_ADCMUX);
+	writel((adc_port & 0xF), base_addr + S3C_ADCMUX);
 
 	udelay(10);
 

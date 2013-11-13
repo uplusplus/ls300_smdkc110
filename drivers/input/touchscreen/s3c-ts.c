@@ -61,6 +61,13 @@
 #include <mach/ts.h>
 #include <mach/irqs.h>
 
+#include <linux/poll.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <linux/cdev.h>
+#include <linux/miscdevice.h>
+
+
 #define CONFIG_TOUCHSCREEN_S3C_DEBUG
 //#undef CONFIG_TOUCHSCREEN_S3C_DEBUG
 
@@ -90,6 +97,133 @@
 void ts_early_suspend(struct early_suspend *h);
 void ts_late_resume(struct early_suspend *h);
 #endif /* CONFIG_HAS_EARLYSUSPEND */
+
+
+
+
+#define DEVICE_NAME     "s3cts"
+static DECLARE_WAIT_QUEUE_HEAD(ts_waitq); //定义并初始化一个等待队列
+ 
+typedef unsigned        TS_EVENT;
+#define NR_EVENTS       64     //触摸屏fifo大小
+ 
+static TS_EVENT         events[NR_EVENTS];
+static int              evt_head, evt_tail; //fifo的头的尾
+                                                            //驱动写fifo时evt_head++，应用读fifo时 evt_tail++
+ 
+#define ts_evt_pending()    ((volatile u8)(evt_head != evt_tail))   //相等就表示满了
+#define ts_evt_get()        (events + evt_tail)
+#define ts_evt_pull()       (evt_tail = (evt_tail + 1) & (NR_EVENTS - 1))
+#define ts_evt_clear()      (evt_head = evt_tail = 0)
+ 
+//将AD转换的值放入FIFO
+//这里是一个先进先出的fifo
+//只要有数据被添加进来，就会唤醒ts_waitq进程
+static void ts_evt_add(unsigned x, unsigned y, unsigned down) {
+    unsigned ts_event;
+    int next_head;
+ 
+    ts_event = ((x << 16) | (y)) | (down << 31);
+    next_head = (evt_head + 1) & (NR_EVENTS - 1);
+        //没满就装入
+    if (next_head != evt_tail) {
+        events[evt_head] = ts_event;
+        evt_head = next_head;
+        //printk("====>Add ... [ %4d,  %4d ]%s\n", x, y, down ? "":" ~~~");
+ 
+        /* wake up any read call */
+        if (waitqueue_active(&ts_waitq)) { //判斷等待隊列是否有進程睡眠
+            wake_up_interruptible(&ts_waitq);  //唤醒ts_waitq等待队列中所有interruptible类型的进程
+        }
+    } else {
+        /* drop the event and try to wakeup readers */
+        printk(KERN_WARNING "mini6410-ts: touch event buffer full");
+        wake_up_interruptible(&ts_waitq);
+    }
+}
+ 
+static unsigned int s3c_ts_poll( struct file *file, struct poll_table_struct *wait)
+{
+    unsigned int mask = 0;
+ 
+    //将ts_waitq等待队列添加到poll_table里去
+    poll_wait(file, &ts_waitq, wait); 
+    //返回掩码                                  
+    if (ts_evt_pending())
+        mask |= POLLIN | POLLRDNORM;  //返回设备可读
+ 
+    return mask;
+}
+ 
+//读 系统调用==
+static int s3c_ts_read(struct file *filp, char __user *buff, size_t count, loff_t *offp)
+{
+    DECLARE_WAITQUEUE(wait, current); //把当前进程加到定义的等待队列头wait中 
+    char *ptr = buff;
+    int err = 0;
+ 
+    add_wait_queue(&ts_waitq, &wait); //把wait入到等待队列头中。该队列会在进程等待的条件满足时唤醒它。
+                                      //我们必须在其他地方写相关代码，在事件发生时，对等的队列执行wake_up()操作。
+                                      //这里是在ts_evt_add里wake_up
+    while (count >= sizeof(TS_EVENT)) {
+        err = -ERESTARTSYS;
+        if (signal_pending(current)) //如果是信号唤醒    参考http://www.360doc.com/content/10/1009/17/1317564_59632874.shtml
+            break;
+ 
+        if (ts_evt_pending()) {
+            TS_EVENT *evt = ts_evt_get();
+ 
+            err = copy_to_user(ptr, evt, sizeof(TS_EVENT));
+            ts_evt_pull();
+ 
+            if (err)
+                break;
+ 
+            ptr += sizeof(TS_EVENT);
+            count -= sizeof(TS_EVENT);
+            continue;
+        }
+ 
+        set_current_state(TASK_INTERRUPTIBLE); //改变进程状态为可中断的睡眠
+        err = -EAGAIN;
+        if (filp->f_flags & O_NONBLOCK) //如果上层调用是非阻塞方式，则不阻塞该进程，直接返回EAGAIN
+            break;
+        schedule();  //本进程在此处交出CPU控制权，等待被唤醒
+                      //进程调度的意思侧重于把当前任务从CPU拿掉，再从就绪队列中按照调度算法取一就绪进程占用CPU
+    }
+    current->state = TASK_RUNNING;
+    remove_wait_queue(&ts_waitq, &wait);
+ 
+    return ptr == buff ? err : ptr - buff;
+}
+//--
+ 
+static int s3c_ts_open(struct inode *inode, struct file *filp) {
+    /* flush event queue */
+    ts_evt_clear();
+ 
+    return 0;
+}
+ 
+//当应用程序操作设备文件时调用的open read等函数，最终会调用这个结构体中对应的函数
+static struct file_operations dev_fops = {
+    .owner              = THIS_MODULE,
+    .read               = s3c_ts_read,
+    .poll               = s3c_ts_poll,  //select系统调用
+    .open               = s3c_ts_open,
+};
+ 
+//设备号，设备名，注册的时候用到这个数组
+//混杂设备主设备号为10
+static struct miscdevice misc = {
+        .minor              = MISC_DYNAMIC_MINOR, //自动分配次设置号
+    //.minor                = 180, 
+    .name               = DEVICE_NAME,
+    .fops               = &dev_fops,
+};
+
+
+
 
 /* Touchscreen default configuration */
 struct s3c_ts_mach_info s3c_ts_default_cfg __initdata = {
@@ -155,14 +289,14 @@ static void touch_timer_fire(unsigned long data)
 				printk(KERN_INFO "T: %06d, X: %03ld, Y: %03ld\n", (int)tv.tv_usec, ts->xp, ts->yp);
 			}
 #endif
-
+   
 #ifdef CONFIG_ANDROID
 #ifndef CONFIG_CPU_S5PV210_EVT1
 			x=(int) ts->xp;
 			y=(int) ts->yp;
 
-			ts->xp=(long) ((a2+(a0*x)+(a1*y))/a6) * 800/480;
-			ts->yp=(long) ((a5+(a3*x)+(a4*y))/a6) * 480/800;
+			ts->xp=(long) ((a2+(a0*x)+(a1*y))/a6) * 640/480;
+			ts->yp=(long) ((a5+(a3*x)+(a4*y))/a6) * 480/640;
 			//printk("x=%d, y=%d\n",(int) ts->xp,(int) ts->yp);
 
 			if (ts->xp!=ts->xp_old || ts->yp!=ts->yp_old) {
@@ -177,11 +311,16 @@ static void touch_timer_fire(unsigned long data)
 			ts->xp_old=ts->xp;
 			ts->yp_old=ts->yp;
 #else /* !CONFIG_CPU_S5PV210_EVT1 */
+	//go here
+		//	ts->xp = 4000 - ts->xp;//by fanwb X MIRROR
+		//	ts->yp = 4000 - ts->yp;//by fanwb Y mirror
 			x=(int) ts->xp/ts->count;
 			y=(int) ts->yp/ts->count;
+			x = 4000 - x;
 #ifdef CONFIG_FB_S3C_LTE480WV
 			y = 4000 - y;
 #endif /* CONFIG_FB_S3C_LTE480WV */
+	//go here
 			//printk("Cordinates x=%d, y=%d\n",(int) x,(int) y);
 			input_report_abs(ts->dev, ABS_X, x);
 			input_report_abs(ts->dev, ABS_Y, y);
@@ -193,12 +332,13 @@ static void touch_timer_fire(unsigned long data)
 			input_report_abs(ts->dev, ABS_X, ts->xp);
 			input_report_abs(ts->dev, ABS_Y, ts->yp);
 
-			input_report_key(ts->dev, BTN_TOUCH, 1);
+	c		input_report_key(ts->dev, BTN_TOUCH, 1);
 			input_report_abs(ts->dev, ABS_PRESSURE, 1);
 			input_sync(ts->dev);
 #endif /* CONFIG_ANDROID */
 		}
-
+	//go here
+    ts_evt_add((ts->xp >> ts->shift), (ts->yp >> ts->shift), 1);//求平均，并写入fifo
 		ts->xp = 0;
 		ts->yp = 0;
 		ts->count = 0;
@@ -206,22 +346,29 @@ static void touch_timer_fire(unsigned long data)
 		writel(S3C_ADCTSC_PULL_UP_DISABLE | AUTOPST, ts_base+S3C_ADCTSC);
 		writel(readl(ts_base+S3C_ADCCON) | S3C_ADCCON_ENABLE_START, ts_base+S3C_ADCCON);
 	} else {
+		//go here
 		ts->count = 0;
 #ifdef CONFIG_ANDROID
 #ifdef CONFIG_CPU_S5PV210_EVT1
+	//go here
 		input_report_abs(ts->dev, ABS_X, ts->xp);
 		input_report_abs(ts->dev, ABS_Y, ts->yp);
 #else /* CONFIG_CPU_S5PV210_EVT1 */
 		input_report_abs(ts->dev, ABS_X, ts->xp_old);
-		input_report_abs(ts->dev, ABS_Y, ts->yp_old);
+	e	input_report_abs(ts->dev, ABS_Y, ts->yp_old);
 #endif /* CONFIG_CPU_S5PV210_EVT1 */
+	//go here
 		input_report_abs(ts->dev, ABS_Z, 0);
 #endif /* CONFIG_ANDROID */
+	//go here
 		input_report_key(ts->dev, BTN_TOUCH, 0);
 #ifndef CONFIG_ANDROID
-		input_report_abs(ts->dev, ABS_PRESSURE, 0);
+	h	input_report_abs(ts->dev, ABS_PRESSURE, 0);
 #endif /* !CONFIG_ANDROID */
+	//go here
 		input_sync(ts->dev);
+
+    ts_evt_add(0, 0, 0);
 
 		writel(WAIT4INT(0), ts_base+S3C_ADCTSC);
 	}
@@ -405,7 +552,7 @@ static int __init s3c_ts_probe(struct platform_device *pdev)
 	if (s3c_ts_cfg->resol_bit==12) {
 #ifdef CONFIG_ANDROID
 #ifndef CONFIG_CPU_S5PV210_EVT1
-		input_set_abs_params(ts->dev, ABS_X, 0, 800, 0, 0);
+		input_set_abs_params(ts->dev, ABS_X, 0, 640, 0, 0);
 		input_set_abs_params(ts->dev, ABS_Y, 0, 480, 0, 0);
 		//  input_set_abs_params(ts->dev, ABS_Z, 0, 0, 0, 0);
 
@@ -503,7 +650,12 @@ static int __init s3c_ts_probe(struct platform_device *pdev)
 		goto fail;
 	}
 	
-	
+	 ret = misc_register(&misc);  //注册这混杂字符设备
+    if (ret) {
+        dev_err(dev, "s3c_ts.c: Could not register device(mini6410 touchscreen)!\n");
+        ret = -EIO;
+        goto fail;
+    }
 	
 
 	return 0;

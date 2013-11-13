@@ -8,47 +8,145 @@
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
-*/
+ */
 
+
+
+
+#include <linux/module.h>
+#include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/ioport.h>
-#include <linux/delay.h>
-#include <linux/serial_core.h>
-#include <linux/io.h>
+#include <linux/input.h>
 #include <linux/platform_device.h>
+#include <linux/miscdevice.h>
+#include <linux/clk.h>
 
+#include <linux/io.h>
+#include <mach/hardware.h>
+#include <linux/delay.h>
+#include <asm/irq.h>
 #include <plat/map-base.h>
 #include <plat/gpio-cfg.h>
 
 #include <mach/regs-gpio.h>
 #include <mach/regs-irq.h>
 #include <linux/gpio.h>
+#include <linux/irq.h>
 
-static irqreturn_t
-s3c_button_interrupt(int irq, void *dev_id)
+static struct input_dev *button_dev;
+
+//==============================================================
+//
+
+struct button {
+	int irq;
+	char *name;
+	int pin;
+	int key;
+};
+
+/* 六个按键的相关定义整合到结构体 */
+static struct button buttons[3] = {
+	{IRQ_EINT1, "Power", S5PV210_GPH0(1), 10},
+	{IRQ_EINT10, "Menu", S5PV210_GPH1(2), KEY_MENU},
+	{IRQ_EINT12, "Back", S5PV210_GPH1(4), KEY_BACK},
+};
+
+static struct timer_list seventh_timer;
+static struct button *buttonp = NULL;
+static int valid = 0;
+
+/* 中断处理函数 */
+static irqreturn_t seventhdrv_intr(int irq, void *data)
 {
-	if (irq == IRQ_EINT1)
-		printk(KERN_INFO "XEINT 1 Button Interrupt occure\n");
-	else
-		printk(KERN_INFO "%d Button Interrupt occure\n", irq);
+	int idx=0;
+	valid = 0;
+	switch(irq)
+	{
+
+		case IRQ_EINT12:
+			idx++;
+		case IRQ_EINT10:
+			idx++;
+		case  IRQ_EINT1:
+			buttonp = (struct button*)(data)+idx;
+
+			printk(KERN_INFO "data = %x \n", data);
+
+			mod_timer(&seventh_timer, jiffies+HZ/100);
+			break;
+		default:
+			printk(KERN_INFO "%d Button Interrupt occure\n", irq);
+			return -1;
+	}
+
+	return IRQ_RETVAL(IRQ_HANDLED);
+}
+
+static void button_timer(unsigned long data)
+{
+	if (buttonp == NULL ) {
+		printk(KERN_INFO "No button pressed!\n");
+		return ;
+	}
+
+	valid = 1;
+
+	buttonp = NULL;
+}
+
+//==============================================================
+
+static irqreturn_t button_interrupt(int irq, void *dummy)
+{
+	//==============================================================
+	if(!valid) return seventhdrv_intr(irq,dummy);
+	valid = 0;
+	//==============================================================
+
+
+	//	printk("button_interrupt %d\n",irq);
+	switch(irq)
+	{
+
+		case  IRQ_EINT1:
+			printk(KERN_INFO "XEINT 1 as powerkey Button Interrupt occure\n");
+
+			input_report_key(button_dev,10,1);
+			udelay(5);
+			input_report_key(button_dev,10,0);
+			break;
+		case IRQ_EINT10:
+			printk(KERN_INFO "XEINT 10 Button Interrupt occure\n");
+
+			input_report_key(button_dev,KEY_MENU,1);
+			udelay(5);
+			input_report_key(button_dev,KEY_MENU,0);
+
+			break;
+		case IRQ_EINT12:
+			printk(KERN_INFO "XEINT 12 Button Interrupt occure\n");
+
+			input_report_key(button_dev,KEY_BACK,1);
+			udelay(5);
+			input_report_key(button_dev,KEY_BACK,0);
+
+			break;
+		default:
+			printk(KERN_INFO "%d Button Interrupt occure\n", irq);
+	}
+
+	//	input_sync(button_dev);
 
 	return IRQ_HANDLED;
 }
-
-static struct irqaction s3c_button_irq = {
-	.name		= "s3c button Tick",
-	.flags		= IRQF_SHARED ,
-	.handler	= s3c_button_interrupt,
-};
 
 static unsigned int s3c_button_gpio_init(void)
 {
 	u32 err;
 #ifndef CONFIG_REGULATOR
-	err = gpio_r
-	equest(S5PV210_GPH0(4), "GPH0");
+	err = gpio_request(S5PV210_GPH0(4), "GPH0");
 	if (err) {
 		printk(KERN_INFO "gpio request error : %d\n", err);
 	} else {
@@ -64,42 +162,86 @@ static unsigned int s3c_button_gpio_init(void)
 		s3c_gpio_setpull(S5PV210_GPH0(1), S3C_GPIO_PULL_NONE);
 	}
 
+	err = gpio_request(S5PV210_GPH1(2), "GPH1");
+	if (err) {
+		printk(KERN_INFO "gpio request error : %d\n", err);
+	} else {
+		s3c_gpio_cfgpin(S5PV210_GPH1(2), (0xf << 8));
+		s3c_gpio_setpull(S5PV210_GPH1(2), S3C_GPIO_PULL_NONE);
+	}
+
+	err = gpio_request(S5PV210_GPH1(4), "GPH1");
+	if (err) {
+		printk(KERN_INFO "gpio request error : %d\n", err);
+	} else {
+		s3c_gpio_cfgpin(S5PV210_GPH1(4), (0xf << 16));
+		s3c_gpio_setpull(S5PV210_GPH1(4), S3C_GPIO_PULL_NONE);
+	}
+	set_irq_type(IRQ_EINT(1), IRQ_TYPE_EDGE_FALLING);
+	set_irq_type(IRQ_EINT(10), IRQ_TYPE_EDGE_FALLING);
+	set_irq_type(IRQ_EINT(12), IRQ_TYPE_EDGE_FALLING);
+
 	return err;
 }
 
-static int __init s3c_button_init(void)
+
+static int __init button_init(void)
 {
-	printk(KERN_INFO "SMDKC110 Button init function 21\n");
-  int ret;
-	/*if (s3c_button_gpio_init()) {
-		printk(KERN_ERR "%s failed\n", __func__);
-		return 0;
+	int error;
+	printk("button_init 1 \n");
+	if(s3c_button_gpio_init())
+	{
+		printk("button_init error\n");
+		return -1;
 	}
-	*/
-#ifndef CONFIG_REGULATOR
-	set_irq_t
-	ype(IRQ_EINT4, IRQF_TRIGGER_FALLING);
-	set_irq_wake(IRQ_EINT4, 1);
-	setup_irq(IRQ_EINT4, &s3c_button_irq);
-#endif
-	/*
-	set_irq_type(IRQ_EINT(31), IRQ_TYPE_EDGE_FALLING);
-	set_irq_wake(IRQ_EINT(31), 1);
-	setup_irq(IRQ_EINT(31), &s3c_button_irq);
-*/
-	/*
-	set_irq_type(IRQ_EINT(1), IRQ_TYPE_EDGE_FALLING);
-	set_irq_wake(IRQ_EINT(1), 1);
-	setup_irq(IRQ_EINT(1), &s3c_button_irq);
-	*/
-	
-		gpio_to_irq(S5PV210_GPH0(1));
-		
-		ret = request_irq(IRQ_EINT1, s3c_button_interrupt, IRQF_TRIGGER_FALLING,"s3c button Tick", &s3c_button_irq);//IRQF_TRIGGER_LOW, client->name, ts);	
-	  if(ret != 0)
-	  			printk("s3c_button_init request irq error\n");
-//	  else
-//	  	enable_irq(IRQ_EINT1);
+	if (request_irq(IRQ_EINT1, button_interrupt, 0, "button IRQ_EINT1", NULL)) {
+		printk(KERN_ERR "button.c: Can't allocate irq %d\n", IRQ_EINT1);
+		return -EBUSY;
+	}
+	if (request_irq(IRQ_EINT10, button_interrupt, 0, "button IRQ_EINT10", NULL)) {
+		printk(KERN_ERR "button.c: Can't allocate irq %d\n", IRQ_EINT10);
+		return -EBUSY;
+	}
+	if (request_irq(IRQ_EINT12, button_interrupt, 0, "button IRQ_EINT12", NULL)) {
+		printk(KERN_ERR "button.c: Can't allocate irq %d\n", IRQ_EINT12);
+		return -EBUSY;
+	}	
+	button_dev = input_allocate_device();
+	if (!button_dev) {
+		printk(KERN_ERR "button.c: Not enough memory\n");
+		error = -ENOMEM;
+		goto err_free_irq;
+	}
+	/*	button_dev->evbit[0] = BIT_MASK(EV_KEY);
+
+		button_dev->keybit[BIT_WORD(KEY_BACKSPACE)] = BIT_MASK(KEY_BACKSPACE);
+		button_dev->keybit[BIT_WORD(KEY_MENU)] = BIT_MASK(KEY_MENU);
+		*/	
+	set_bit(EV_KEY, button_dev->evbit);
+	set_bit(KEY_BACK, button_dev->keybit);
+	set_bit(KEY_MENU, button_dev->keybit);	
+
+
+	error = input_register_device(button_dev);
+	if (error) {
+		printk(KERN_ERR "button.c: Failed to register device\n");
+		goto err_free_dev;
+	}
+
+
+	setup_timer(&seventh_timer, button_timer, (unsigned long)&buttons);
+
 	return 0;
+err_free_dev:
+	input_free_device(button_dev);
+err_free_irq:
+	free_irq(IRQ_EINT1, button_interrupt);
+	return error;
 }
-late_initcall(s3c_button_init);
+static void __exit button_exit(void)
+{
+	input_unregister_device(button_dev);
+	free_irq(IRQ_EINT1, button_interrupt);
+}
+module_init(button_init);
+module_exit(button_exit);

@@ -150,6 +150,7 @@ static struct regulator_consumer_supply buck2_consumers[] = {
 };
 
 static struct regulator_init_data max8698_buck2_data = {
+	
 	.constraints	= {
 		.name		= "VCC_INTERNAL",
 		.min_uV		= 950000,
@@ -395,7 +396,7 @@ static struct max8698_platform_data max8698_platform_data = {
 };
 #endif
 
-#ifdef CONFIG_TOUCHSCREEN_S3C
+#if defined(CONFIG_TOUCHSCREEN_S3C)
 static struct s3c_ts_mach_info s3c_ts_platform __initdata = {
 	.delay                  = 10000,
 	.presc                  = 49,
@@ -405,7 +406,7 @@ static struct s3c_ts_mach_info s3c_ts_platform __initdata = {
 };
 #endif
 
-#ifdef CONFIG_S5PV210_ADC
+#ifdef CONFIG_S5P_ADC
 static struct s3c_adc_mach_info s3c_adc_platform __initdata = {
 	/* s5pc100 supports 12-bit resolution */
 	.delay  = 10000,
@@ -741,7 +742,7 @@ static struct spi_board_info s3c_spi_devs[] __initdata = {
         .mode        = SPI_MODE_0,
         .irq        = IRQ_EINT15,
         .max_speed_hz    = 100000, /* max sample rate at 3V */
-        .bus_num    = 0,     // 表示选用的是那一组SPI （2410有两组SPI0,SPI1）
+        .bus_num    = 0,     // \B1\ED示选\D3玫\C4\CA\C7\C4\C7一\D7\E9SPI \A3\A82410\D3\D0\C1\BD\D7\E9SPI0,SPI1\A3\A9
         .chip_select    = 0,// S3C2410_GPG2,//0,
     },
 			
@@ -792,6 +793,13 @@ static struct i2c_board_info i2c_devs2[] __initdata = {
 		//I2C_BOARD_INFO("wm8580", 0x1b),
 		I2C_BOARD_INFO("it7260_ts", 0x46),
 	},
+#endif
+
+#ifdef CONFIG_TOUCHSCREEN_ZINITIX
+{
+I2C_BOARD_INFO("zinitix_touch", 0x20),
+.irq= IRQ_EINT10,
+},
 #endif
 
 
@@ -972,7 +980,7 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 #ifdef CONFIG_TOUCHSCREEN_S3C
 	&s3c_device_ts,
 #endif
-#ifdef CONFIG_S5PV210_ADC
+#ifdef CONFIG_S5P_ADC
 	&s3c_device_adc,
 #endif
 #ifdef CONFIG_DM9000
@@ -1050,9 +1058,11 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 #endif
 
 #ifdef CONFIG_SPI_CNTRLR_0
+
         &s3c_device_spi0,
 #endif
 #ifdef CONFIG_SPI_CNTRLR_1
+sd
         &s3c_device_spi1,
 #endif
 
@@ -1075,6 +1085,44 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 	&s3c_device_spi_gpio,
 #endif
 };
+
+/* Touch srcreen */
+static struct resource s3c_ts_resource[] = {
+	[0] = {
+		.start = S3C_PA_ADC,
+		.end   = S3C_PA_ADC + SZ_4K - 1,
+		.flags = IORESOURCE_MEM,
+	},
+	[1] = {
+		.start = IRQ_PENDN,
+		.end   = IRQ_PENDN,
+		.flags = IORESOURCE_IRQ,
+	},
+	[2] = {
+		.start = IRQ_ADC,
+		.end   = IRQ_ADC,
+		.flags = IORESOURCE_IRQ,
+	}
+};
+
+struct platform_device s3c_device_ts = {
+	.name		  = "s3c-ts",
+	.id		  = -1,
+	.num_resources	  = ARRAY_SIZE(s3c_ts_resource),
+	.resource	  = s3c_ts_resource,
+};
+void __init s3c_ts_set_platdata(struct s3c_ts_mach_info *pd)
+{
+	struct s3c_ts_mach_info *npd;
+
+	npd = kmalloc(sizeof(*npd), GFP_KERNEL);
+	if (npd) {
+		memcpy(npd, pd, sizeof(*npd));
+		s3c_device_ts.dev.platform_data = npd;
+	} else {
+		pr_err("no memory for Touchscreen platform data\n");
+	}
+}
 
 static void __init smdkv210_fixup(struct machine_desc *desc,
                                        struct tag *tags, char **cmdline,
@@ -1132,6 +1180,29 @@ static struct s3c_platform_fb byd8688_fb_data __initdata = {
 };
 #endif
 
+
+#ifdef CONFIG_TOUCHSCREEN_FORLINX
+extern void s3c_setup_capacitouch_cfg_gpio()
+{
+    unsigned int gpio=S5PV210_GPH3(3);
+
+    if (!gpio_request(gpio, "Capacitance Touch"))
+    {
+        gpio_direction_input(gpio);
+        s3c_gpio_cfgpin(gpio, S3C_GPIO_SFN(0xF));
+        s3c_gpio_setpull(gpio, S3C_GPIO_PULL_NONE);
+
+    }else
+    {
+        printk("Capacitance Touch gpio set error!\n");
+
+    }
+
+    gpio_free(gpio);
+
+}
+EXPORT_SYMBOL(s3c_setup_capacitouch_cfg_gpio);
+#endif
 
 /* this function are used to detect s5pc110 chip version temporally */
 
@@ -1281,12 +1352,7 @@ static void __init smdkv210_machine_init(void)
 	s3c_gpio_setpin(S5PV210_GPG3(3),0);
 	
 	mdelay(200);
-	
-	s3c_gpio_setpull(S5PV210_GPH1(2), S3C_GPIO_PULL_NONE);
-  s3c_gpio_cfgpin(S5PV210_GPH1(2), (0x1<<8));
-	s3c_gpio_setpin(S5PV210_GPH1(2),1);
-	
-	
+
 	///////////////////////////////////////////////
 	//modem start power on
 	s3c_gpio_setpull(S5PV210_GPC1(2), S3C_GPIO_PULL_NONE);
@@ -1319,7 +1385,7 @@ static void __init smdkv210_machine_init(void)
 	s3c_ts_set_platdata(&s3c_ts_platform);
 #endif
 
-#if defined(CONFIG_S5PV210_ADC)
+#if defined(CONFIG_S5P_ADC)
 	s3c_adc_set_platdata(&s3c_adc_platform);
 #endif
 

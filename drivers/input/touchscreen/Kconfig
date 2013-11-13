@@ -572,6 +572,17 @@ config TOUCHSCREEN_IT7260
 	depends on I2C
 	help
 	  This enables support for IT7260 over I2C based touchscreens.
+config TOUCHSCREEN_ZINITIX
+	tristate "ZINITIX I2C touchscreen driver"
+	depends on I2C
+	help
+	  This enables support for ZINITIX over I2C based touchscreens.
+config TOUCHSCREEN_FORLINX
+	tristate "forlinx multi-touch driver"
+	depends on CPU_S5PV210
+	default y
+	help
+	  Say Y here to enable the driver forlinx multi-touchscreen.
 
 
 endif

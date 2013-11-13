@@ -13,8 +13,8 @@
 #include "s3cfb.h"
 
 static struct s3cfb_lcd byd8688 = {
-	.width	= 1024,
-	.height	= 600,
+	.width	= 640,
+	.height	= 480,
 	.bpp	= 24,
 	.freq	= 60,
 

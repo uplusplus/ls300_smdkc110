@@ -492,13 +492,7 @@ static int smdkv210_mipi_cam_power(int onoff)
 	int err;
 
 	/* added for V210 CAM power */
-	err = gpio_request(S5PV210_GPH1(2), "GPH1");
-	if (err)
-		printk(KERN_ERR "#### failed to request(GPH1)for CAM_2V8\n");
 
-	s3c_gpio_setpull(S5PV210_GPH1(2), S3C_GPIO_PULL_NONE);
-	gpio_direction_output(S5PV210_GPH1(2), onoff);
-	gpio_free(S5PV210_GPH1(2));
 
 	return 0;
 }

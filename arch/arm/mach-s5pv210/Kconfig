@@ -169,10 +169,11 @@ endmenu
 
 # platform specific device setup
 # ADC part
-config S5PV210_ADC
+config S5P_ADC
         bool "S5PV210_ ADC Driver"
-        depends on CPU_S5PV210
+        depends on PLAT_S5P
+        default y
         help
-          ADC (A/D Conversion) driver for Samsung S5PV210.
+          ADC (A/D Conversion) driver for Samsung S5PXXXX.
 
 endif

@@ -74,25 +74,25 @@ struct proc_dir_entry *keypad_proc_ptr=NULL;
 char msg[512]; 
 
 int keypad_proc_read( char *page, char **start, off_t off,
-                   int count, int *eof, void *data )
+		int count, int *eof, void *data )
 {
-  //printk("keypad_proc_read\n");
+	//printk("keypad_proc_read\n");
 
-  return sprintf(page, "%s\n", msg);
+	return sprintf(page, "%s\n", msg);
 }
 
 
 ssize_t keypad_proc_write( struct file *filp, const char __user *buff,
-                        unsigned long len, void *data )
+		unsigned long len, void *data )
 {
 	//printk("keypad_proc_write\n");
-	
+
 	copy_from_user(msg,buff,len);
-	
+
 	input_report_key(gdev,msg[0],1);
 	udelay(5);
 	input_report_key(gdev,msg[0],0);
-	
+
 	printk("write data:%d\n",msg[0]);
 
 	return len;
@@ -104,8 +104,8 @@ static int keypad_scan(void)
 {
 	u32 col,cval,rval;
 
-//	printk("H3C %x H2C %x \n",readl(S5PV210_GPH3_BASE),readl(S5PV210_GPH2_BASE));
-//	printk("keypad_scan() is called\n");
+	//	printk("H3C %x H2C %x \n",readl(S5PV210_GPH3_BASE),readl(S5PV210_GPH2_BASE));
+	//	printk("keypad_scan() is called\n");
 
 	DPRINTK("row val = %x",readl(key_base + S3C_KEYIFROW));
 
@@ -200,7 +200,7 @@ static int __init s3c_keypad_probe(struct platform_device *pdev)
 	int ret, size;
 	int key, code;
 
-    printk("s3c_keypad_probe\n");
+	printk("s3c_keypad_probe\n");
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (res == NULL) {
 		dev_err(&pdev->dev, "no memory resource specified\n");
@@ -243,16 +243,16 @@ static int __init s3c_keypad_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, s3c_keypad);
 	s3c_keypad->dev = input_dev;
 	gdev = input_dev;// by fanwb
-	
+
 	/////////////////////////////////////////////////////////////////
 	//by zorro
 	printk(KERN_INFO "keypad_proc init.  Module is now loaded.\n");
-  keypad_proc_ptr = create_proc_entry("keypad", S_IFREG|S_IRUGO|S_IWUSR, NULL);
+	keypad_proc_ptr = create_proc_entry("keypad", S_IFREG|S_IRUGO|S_IWUSR, NULL);
 	keypad_proc_ptr->data = (void *)0;
 	keypad_proc_ptr->read_proc  = keypad_proc_read;
 	keypad_proc_ptr->write_proc = keypad_proc_write;
-	
-	
+
+
 
 	writel(KEYIFCON_INIT, key_base+S3C_KEYIFCON);
 	writel(KEYIFFC_DIV, key_base+S3C_KEYIFFC);
@@ -304,7 +304,7 @@ static int __init s3c_keypad_probe(struct platform_device *pdev)
 		goto err_irq;
 	}
 	ret = request_irq(keypad_irq->start, s3c_keypad_isr, IRQF_SAMPLE_RANDOM,
-		DEVICE_NAME, (void *) pdev);
+			DEVICE_NAME, (void *) pdev);
 	if (ret) {
 		printk(KERN_ERR"request_irq failed (IRQ_KEYPAD) !!!\n");
 		ret = -EIO;
@@ -437,22 +437,47 @@ static struct platform_driver s3c_keypad_driver = {
 	},
 };
 
-static irqreturn_t
+	static irqreturn_t
 s3c_button_interrupt(int irq, void *dev_id)
 {
-	if (irq == IRQ_EINT1)
-		{
-			printk(KERN_INFO "XEINT 1 Button Interrupt occure\n");
-			if(gdev)
+	printk("s3c_button_interrupt\n");
+	switch(irq)
+	{
+
+		case  IRQ_EINT1:
+			{
+				printk(KERN_INFO "XEINT 1 as powerkey Button Interrupt occure\n");
+				if(gdev)
 				{
-				input_report_key(gdev,10,1);
-				udelay(5);
-				input_report_key(gdev,10,0);
+					input_report_key(gdev,10,1);
+					udelay(5);
+					input_report_key(gdev,10,0);
 				}
 
-		}
-	else
-		printk(KERN_INFO "%d Button Interrupt occure\n", irq);
+			}
+			break;
+		case IRQ_EINT10:
+			printk(KERN_INFO "XEINT 10 Button Interrupt occure\n");
+			if(gdev)
+			{
+				input_report_key(gdev,50,1);
+				udelay(5);
+				input_report_key(gdev,50,0);
+			}
+
+			break;
+		case IRQ_EINT12:
+			printk(KERN_INFO "XEINT 12 Button Interrupt occure\n");
+			if(gdev)
+			{
+				input_report_key(gdev,34,1);
+				udelay(5);
+				input_report_key(gdev,34,0);
+			}		
+			break;
+		default:
+			printk(KERN_INFO "%d Button Interrupt occure\n", irq);
+	}
 
 	return IRQ_HANDLED;
 }
@@ -468,8 +493,7 @@ static unsigned int s3c_button_gpio_init(void)
 {
 	u32 err;
 #ifndef CONFIG_REGULATOR
-	err = gpio_r
-	equest(S5PV210_GPH0(4), "GPH0");
+	err = gpio_request(S5PV210_GPH0(4), "GPH0");
 	if (err) {
 		printk(KERN_INFO "gpio request error : %d\n", err);
 	} else {
@@ -485,31 +509,57 @@ static unsigned int s3c_button_gpio_init(void)
 		s3c_gpio_setpull(S5PV210_GPH0(1), S3C_GPIO_PULL_NONE);
 	}
 
+	err = gpio_request(S5PV210_GPH1(2), "GPH1");
+	if (err) {
+		printk(KERN_INFO "gpio request error : %d\n", err);
+	} else {
+		s3c_gpio_cfgpin(S5PV210_GPH1(2), (0xf << 8));
+		s3c_gpio_setpull(S5PV210_GPH1(2), S3C_GPIO_PULL_NONE);
+	}
+
+	err = gpio_request(S5PV210_GPH1(4), "GPH1");
+	if (err) {
+		printk(KERN_INFO "gpio request error : %d\n", err);
+	} else {
+		s3c_gpio_cfgpin(S5PV210_GPH1(4), (0xf << 16));
+		s3c_gpio_setpull(S5PV210_GPH1(4), S3C_GPIO_PULL_NONE);
+	}
+
+
+
 	return err;
 }
-
 
 
 
 static int __init s3c_keypad_init(void)
 {
 	int ret;
-	
-	
 
-	  if (s3c_button_gpio_init()) {
-		  printk(KERN_ERR "%s failed\n", __func__);
-		  return 0;
-	  }
-	  set_irq_type(IRQ_EINT1, IRQ_TYPE_EDGE_FALLING);
-	  set_irq_wake(IRQ_EINT1, 1);
-	  setup_irq(IRQ_EINT1, &s3c_button_irq);
+	printk("s3c_keypad_init\n");
+
+	if (s3c_button_gpio_init()) {
+		printk(KERN_ERR "%s failed\n", __func__);
+		return 0;
+	}
+	set_irq_type(IRQ_EINT1, IRQ_TYPE_EDGE_FALLING);
+	set_irq_wake(IRQ_EINT1, 1);
+	setup_irq(IRQ_EINT1, &s3c_button_irq);
+
+	set_irq_type(IRQ_EINT(10), IRQ_TYPE_EDGE_FALLING);
+	set_irq_wake(IRQ_EINT(10), 1);
+	setup_irq(IRQ_EINT(10), &s3c_button_irq);
+
+	set_irq_type(IRQ_EINT(12), IRQ_TYPE_EDGE_FALLING);
+	set_irq_wake(IRQ_EINT(12), 1);
+	setup_irq(IRQ_EINT(12), &s3c_button_irq);
+
 
 
 	ret = platform_driver_register(&s3c_keypad_driver);
 
 	if (!ret)
-	   printk(KERN_INFO "S3C Keypad Driver\n");
+		printk(KERN_INFO "S3C Keypad Driver\n");
 
 	return ret;
 }

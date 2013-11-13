@@ -178,13 +178,17 @@ void s5pv210_setup_sdhci_cfg_card(struct platform_device *dev,
 
 static void setup_sdhci0_gpio_wp(void)
 {
-	s3c_gpio_cfgpin(S5PV210_GPH0(7), S3C_GPIO_INPUT);
-	s3c_gpio_setpull(S5PV210_GPH0(7), S3C_GPIO_PULL_DOWN);
+    printk("start!\n");
+//	s3c_gpio_cfgpin(S5PV210_GPH0(7), S3C_GPIO_INPUT);
+	s3c_gpio_cfgpin(S5PV210_GPH0(7), S3C_GPIO_OUTPUT);
+//	s3c_gpio_setpull(S5PV210_GPH0(7), S3C_GPIO_PULL_DOWN);
+	s3c_gpio_setpull(S5PV210_GPH0(7), S3C_GPIO_PULL_UP);
+    printk("end!\n");
 }
 
 static int sdhci0_get_ro(struct mmc_host *mmc)
 {
-	return !!(readl(S5PV210_GPH0DAT) & 0x80);
+	return 0; //!!(readl(S5PV210_GPH0DAT) & 0x80); //uplusplus force to rw
 }
 
 static struct s3c_sdhci_platdata hsmmc0_platdata = {

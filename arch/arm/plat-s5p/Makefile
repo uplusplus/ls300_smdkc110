@@ -44,4 +44,4 @@ obj-$(CONFIG_S5P_SETUP_MFC)	+= setup-mfc.o
 
 obj-$(CONFIG_SND_S3C24XX_SOC)	+= dev-audio.o
 
-obj-$(CONFIG_TOUCHSCREEN_S3C)   += dev-ts.o
+#obj-$(CONFIG_TOUCHSCREEN_S3C)   += dev-ts.o
