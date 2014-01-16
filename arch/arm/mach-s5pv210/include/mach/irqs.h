@@ -135,6 +135,8 @@
 #define IRQ_VIC_END		S5P_IRQ_VIC3(31)
 
 #define S5P_IRQ_EINT_BASE	(IRQ_VIC_END + 1)
+#define S5P_GPIOINT_BASE    (IRQ_EINT(31) + 1)
+#define S5P_IRQ_GPIOINT(x)     (S5P_GPIOINT_BASE + (x))
 
 #define S5P_EINT(x)		((x) + S5P_IRQ_EINT_BASE)
 #define IRQ_EINT(x)		S5P_EINT(x)

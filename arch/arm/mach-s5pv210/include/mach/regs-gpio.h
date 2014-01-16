@@ -300,4 +300,18 @@
 #define S5P_EXTINT_RISEEDGE		(0x03)
 #define S5P_EXTINT_BOTHEDGE		(0x04)
 
+#define S5PC100EINT30CON        (S5P_VA_GPIO + 0xE00)
+#define S5P_EINT_CON(x)         (S5PC100EINT30CON + ((x) * 0x4))
+
+#define S5PC100EINT30FLTCON0        (S5P_VA_GPIO + 0xE80)
+#define S5P_EINT_FLTCON(x)      (S5PC100EINT30FLTCON0 + ((x) * 0x4))
+
+#define S5PC100EINT30MASK       (S5P_VA_GPIO + 0xF00)
+#define S5P_EINT_MASK(x)        (S5PC100EINT30MASK + ((x) * 0x4))
+
+#define S5PC100EINT30PEND       (S5P_VA_GPIO + 0xF40)
+#define S5P_EINT_PEND(x)        (S5PC100EINT30PEND + ((x) * 0x4))
+
+#define EINT_REG_NR(x)          (EINT_OFFSET(x) >> 3)
+
 #endif /* __ASM_ARCH_REGS_GPIO_H */

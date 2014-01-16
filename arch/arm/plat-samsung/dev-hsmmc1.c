@@ -40,12 +40,7 @@ static u64 s3c_device_hsmmc1_dmamask = 0xffffffffUL;
 struct s3c_sdhci_platdata s3c_hsmmc1_def_platdata = {
 	.max_width	= 4,
 	.host_caps	= (MMC_CAP_4_BIT_DATA |
-#if defined(CONFIG_MMC_CH1_CLOCK_GATING)
-		MMC_CAP_CLOCK_GATING |
-#endif
 			   MMC_CAP_MMC_HIGHSPEED | MMC_CAP_SD_HIGHSPEED),
-			   
-			   //.host_caps	= MMC_CAP_4_BIT_DATA,
 };
 
 struct platform_device s3c_device_hsmmc1 = {
@@ -80,4 +75,10 @@ void s3c_sdhci1_set_platdata(struct s3c_sdhci_platdata *pd)
 		set->cfg_wp = pd->cfg_wp;
 	if (pd->get_ro)
 		set->get_ro = pd->get_ro;
+	if (pd->detect_ext_cd)
+		set->detect_ext_cd = pd->detect_ext_cd;
+	if (pd->detect_ext_cd)
+		set->detect_ext_cd = pd->detect_ext_cd;
+	if (pd->built_in)
+		set->built_in = pd->built_in;
 }

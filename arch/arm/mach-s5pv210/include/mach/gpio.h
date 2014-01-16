@@ -223,4 +223,31 @@ enum s5p_gpio_number {
 
 #include <asm-generic/gpio.h>
 
+
+#include <plat/gpio-cfg.h>
+
+extern int s3c_gpio_slp_cfgpin(unsigned int pin, unsigned int to);
+extern s3c_gpio_pull_t s3c_gpio_get_slp_cfgpin(unsigned int pin);
+
+#define S3C_GPIO_SLP_OUT0       ((__force s3c_gpio_pull_t)0x00)
+#define S3C_GPIO_SLP_OUT1       ((__force s3c_gpio_pull_t)0x01)
+#define S3C_GPIO_SLP_INPUT      ((__force s3c_gpio_pull_t)0x02)
+#define S3C_GPIO_SLP_PREV       ((__force s3c_gpio_pull_t)0x03)
+
+extern int s3c_gpio_set_drvstrength(unsigned int pin, unsigned int config);
+extern int s3c_gpio_set_slewrate(unsigned int pin, unsigned int config);
+
+#define S3C_GPIO_DRVSTR_1X      (0)
+#define S3C_GPIO_DRVSTR_2X      (1)
+#define S3C_GPIO_DRVSTR_3X      (2)
+#define S3C_GPIO_DRVSTR_4X      (3)
+
+#define S3C_GPIO_SLEWRATE_FAST  (0)
+#define S3C_GPIO_SLEWRATE_SLOW  (1)
+
+extern int s3c_gpio_slp_setpull_updown(unsigned int pin, s3c_gpio_pull_t pull);
+extern int s5pv210_gpiolib_init(void);
+
+
+
 #endif /* __ASM_ARCH_GPIO_H */

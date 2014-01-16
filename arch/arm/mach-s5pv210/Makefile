@@ -12,7 +12,7 @@ obj-				:=
 
 # Core support for S5PV210 system
 
-obj-$(CONFIG_CPU_S5PV210)	+= cpu.o init.o clock.o gpio.o dma.o pd.o irq-eint-group.o irq-eint.o button-smdkv210.o
+obj-$(CONFIG_CPU_S5PV210)	+= cpu.o init.o clock.o gpiolib.o dma.o pd.o irq-eint-group.o irq-eint.o button-smdkv210.o
 
 # machine support
 
