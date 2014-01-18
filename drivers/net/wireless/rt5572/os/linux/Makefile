@@ -9,7 +9,7 @@ else
 RT28xx_MODE = $(WIFI_MODE)
 endif
 
-MODULE = $(word 1, $(CHIPSET))
+MODULE = $(word 5, $(CHIPSET))
 
 #OS ABL - YES or NO
 OSABL = NO
@@ -34,7 +34,7 @@ endif
 #endif // CONFIG_STA_SUPPORT //
 
 
-obj-m := $(MOD_NAME).o
+obj-$(CONFIG_RT5572) := $(MOD_NAME).o
 
 
 #ifdef CONFIG_STA_SUPPORT

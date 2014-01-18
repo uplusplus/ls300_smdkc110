@@ -1,3 +1,7 @@
+
+#Support ANDROID_SUPPORT
+HAS_ANDROID_SUPPORT=y
+
 # Support ATE function
 HAS_ATE=n
 
@@ -21,8 +25,11 @@ HAS_WDS=n
 # Support AP-Client function
 HAS_APCLI=n
 
-# Support Wpa_Supplicant
-# i.e. wpa_supplicant -Dralink
+
+ifeq ($(HAS_ANDROID_SUPPORT),y)
+HAS_WPA_SUPPLICANT=y
+HAS_NATIVE_WPA_SUPPLICANT_SUPPORT=y
+else
 HAS_WPA_SUPPLICANT=n
 
 
@@ -33,6 +40,7 @@ HAS_WPA_SUPPLICANT=n
 # in case, it must use Ralink Propriectary wpa_supplicant to do.
 # and this compile flag will report P2P Related Event to Ralink wpa_supplicant.
 HAS_NATIVE_WPA_SUPPLICANT_SUPPORT=n
+endif
 
 #Support Net interface block while Tx-Sw queue full
 HAS_BLOCK_NET_IF=n
@@ -87,9 +95,6 @@ HAS_RT2880_RT2860_COEXIST=n
 HAS_KTHREAD_SUPPORT=n
 
 
-
-
-
 #Support for WiFi Display
 HAS_WFD_SUPPORT=n
 
@@ -112,8 +117,6 @@ HAS_USB_SUPPORT_SELECTIVE_SUSPEND=n
 HAS_USB_FIRMWARE_MULTIBYTE_WRITE=n
 
 
-#Support ANDROID_SUPPORT
-HAS_ANDROID_SUPPORT=y
 
 #HAS_IFUP_IN_PROBE_SUPPORT
 HAS_IFUP_IN_PROBE_SUPPORT=n
