@@ -1,0 +1,4 @@
+config RT5572
+	tristate "Ralink 5572 5370 usb driver support"
+	---help---
+	  Ralink 5572 5370 usb

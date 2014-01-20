@@ -1,4 +1,5 @@
 add script: setenv
 add drivers/hello
 add asix driver
+add rt5572 driver
 config spi dev
