@@ -13,24 +13,34 @@
 #include <linux/kernel.h>
 #include <linux/irq.h>
 #include <linux/io.h>
+
+
+#include <mach/regs-gpio.h>
+
+#include <mach/gpio.h>
+#include <mach/map.h>
 #include <linux/gpio.h>
+
 #include <linux/module.h>
+
 #include <plat/gpio-core.h>
 #include <plat/gpio-cfg.h>
 #include <plat/gpio-cfg-helpers.h>
-#include <mach/map.h>
-#include <mach/regs-gpio.h>
+
 
 static struct s3c_gpio_cfg gpio_cfg = {
+	.cfg_eint	= 0xf,
 	.set_config	= s3c_gpio_setcfg_s3c64xx_4bit,
 	.set_pull	= s3c_gpio_setpull_updown,
 	.get_pull	= s3c_gpio_getpull_updown,
+	.set_pin    = s3c_gpio_setpin_updown
 };
 
 static struct s3c_gpio_cfg gpio_cfg_noint = {
 	.set_config	= s3c_gpio_setcfg_s3c64xx_4bit,
 	.set_pull	= s3c_gpio_setpull_updown,
 	.get_pull	= s3c_gpio_getpull_updown,
+	.set_pin    = s3c_gpio_setpin_updown
 };
 
 static int s5p_gpiolib_eint_to_irq(struct gpio_chip *chip, unsigned int offset)
@@ -63,6 +73,8 @@ static int s5p_gpiolib_gpioint_to_irq(struct gpio_chip *chip, unsigned int offse
  */
 static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 	{
+		.base	= S5PV210_GPA0_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPA0(0),
 			.ngpio	= S5PV210_GPIO_A0_NR,
@@ -70,6 +82,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPA1_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPA1(0),
 			.ngpio	= S5PV210_GPIO_A1_NR,
@@ -77,6 +91,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPB_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPB(0),
 			.ngpio	= S5PV210_GPIO_B_NR,
@@ -84,6 +100,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPC0_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPC0(0),
 			.ngpio	= S5PV210_GPIO_C0_NR,
@@ -91,6 +109,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPC1_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPC1(0),
 			.ngpio	= S5PV210_GPIO_C1_NR,
@@ -98,6 +118,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPD0_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPD0(0),
 			.ngpio	= S5PV210_GPIO_D0_NR,
@@ -105,6 +127,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPD1_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPD1(0),
 			.ngpio	= S5PV210_GPIO_D1_NR,
@@ -112,6 +136,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPE0_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPE0(0),
 			.ngpio	= S5PV210_GPIO_E0_NR,
@@ -119,6 +145,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPE1_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPE1(0),
 			.ngpio	= S5PV210_GPIO_E1_NR,
@@ -126,6 +154,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPF0_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPF0(0),
 			.ngpio	= S5PV210_GPIO_F0_NR,
@@ -133,6 +163,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPF1_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPF1(0),
 			.ngpio	= S5PV210_GPIO_F1_NR,
@@ -140,6 +172,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPF2_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPF2(0),
 			.ngpio	= S5PV210_GPIO_F2_NR,
@@ -147,6 +181,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPF3_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPF3(0),
 			.ngpio	= S5PV210_GPIO_F3_NR,
@@ -154,6 +190,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPG0_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPG0(0),
 			.ngpio	= S5PV210_GPIO_G0_NR,
@@ -161,6 +199,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPG1_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPG1(0),
 			.ngpio	= S5PV210_GPIO_G1_NR,
@@ -168,6 +208,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPG2_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPG2(0),
 			.ngpio	= S5PV210_GPIO_G2_NR,
@@ -175,6 +217,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPG3_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPG3(0),
 			.ngpio	= S5PV210_GPIO_G3_NR,
@@ -182,13 +226,48 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
-		.config = &gpio_cfg_noint,
+		.base	= S5PV210_GPH0_BASE,
+		.config	= &gpio_cfg_noint,
+		.chip	= {
+			.base	= S5PV210_GPH0(0),
+			.ngpio	= S5PV210_GPIO_H0_NR,
+			.label	= "GPH0",
+		},
+	}, {
+		.base	= S5PV210_GPH1_BASE,
+		.config	= &gpio_cfg_noint,
+		.chip	= {
+			.base	= S5PV210_GPH1(0),
+			.ngpio	= S5PV210_GPIO_H1_NR,
+			.label	= "GPH1",
+		},
+	}, {
+		.base	= S5PV210_GPH2_BASE,
+		.config	= &gpio_cfg_noint,
+		.chip	= {
+			.base	= S5PV210_GPH2(0),
+			.ngpio	= S5PV210_GPIO_H2_NR,
+			.label	= "GPH2",
+		},
+	}, {
+		.base	= S5PV210_GPH3_BASE,
+		.config	= &gpio_cfg_noint,
+		.chip	= {
+			.base	= S5PV210_GPH3(0),
+			.ngpio	= S5PV210_GPIO_H3_NR,
+			.label	= "GPH3",
+		},
+	}, {
+		.base	= S5PV210_GPI_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPI(0),
 			.ngpio	= S5PV210_GPIO_I_NR,
 			.label	= "GPI",
 		},
 	}, {
+		.base	= S5PV210_GPJ0_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPJ0(0),
 			.ngpio	= S5PV210_GPIO_J0_NR,
@@ -196,6 +275,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPJ1_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPJ1(0),
 			.ngpio	= S5PV210_GPIO_J1_NR,
@@ -203,6 +284,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPJ2_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPJ2(0),
 			.ngpio	= S5PV210_GPIO_J2_NR,
@@ -210,6 +293,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPJ3_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPJ3(0),
 			.ngpio	= S5PV210_GPIO_J3_NR,
@@ -217,6 +302,8 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_GPJ4_BASE,
+		.config	= &gpio_cfg,
 		.chip	= {
 			.base	= S5PV210_GPJ4(0),
 			.ngpio	= S5PV210_GPIO_J4_NR,
@@ -224,6 +311,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.to_irq = s5p_gpiolib_gpioint_to_irq,
 		},
 	}, {
+		.base	= S5PV210_MP01_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP01(0),
@@ -231,6 +319,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP01",
 		},
 	}, {
+		.base	= S5PV210_MP02_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP02(0),
@@ -238,6 +327,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP02",
 		},
 	}, {
+		.base	= S5PV210_MP03_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP03(0),
@@ -245,6 +335,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP03",
 		},
 	}, {
+		.base	= S5PV210_MP04_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP04(0),
@@ -252,6 +343,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP04",
 		},
 	}, {
+		.base	= S5PV210_MP05_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP05(0),
@@ -259,6 +351,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP05",
 		},
 	}, {
+		.base	= S5PV210_MP06_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP06(0),
@@ -266,6 +359,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP06",
 		},
 	}, {
+		.base	= S5PV210_MP07_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP07(0),
@@ -273,6 +367,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP07",
 		},
 	}, {
+		.base	= S5PV210_MP10_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP10(0),
@@ -280,6 +375,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP10",
 		},
 	}, {
+		.base	= S5PV210_MP11_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP11(0),
@@ -287,6 +383,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP11",
 		},
 	}, {
+		.base	= S5PV210_MP12_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP12(0),
@@ -294,6 +391,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP12",
 		},
 	}, {
+		.base	= S5PV210_MP13_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP13(0),
@@ -301,6 +399,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP13",
 		},
 	}, {
+		.base	= S5PV210_MP14_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP14(0),
@@ -308,6 +407,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP14",
 		},
 	}, {
+		.base	= S5PV210_MP15_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP15(0),
@@ -315,6 +415,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP15",
 		},
 	}, {
+		.base	= S5PV210_MP16_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP16(0),
@@ -322,6 +423,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP16",
 		},
 	}, {
+		.base	= S5PV210_MP17_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP17(0),
@@ -329,6 +431,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP17",
 		},
 	}, {
+		.base	= S5PV210_MP18_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP18(0),
@@ -336,6 +439,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP18",
 		},
 	}, {
+		.base	= S5PV210_MP20_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP20(0),
@@ -343,6 +447,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP20",
 		},
 	}, {
+		.base	= S5PV210_MP21_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP21(0),
@@ -350,6 +455,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP21",
 		},
 	}, {
+		.base	= S5PV210_MP22_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP22(0),
@@ -357,6 +463,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP22",
 		},
 	}, {
+		.base	= S5PV210_MP23_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP23(0),
@@ -364,6 +471,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP23",
 		},
 	}, {
+		.base	= S5PV210_MP24_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP24(0),
@@ -371,6 +479,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP24",
 		},
 	}, {
+		.base	= S5PV210_MP25_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP25(0),
@@ -378,6 +487,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP25",
 		},
 	}, {
+		.base	= S5PV210_MP26_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP26(0),
@@ -385,6 +495,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP26",
 		},
 	}, {
+		.base	= S5PV210_MP27_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP27(0),
@@ -392,6 +503,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP27",
 		},
 	}, {
+		.base	= S5PV210_MP28_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_MP28(0),
@@ -399,6 +511,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "MP28",
 		},
 	}, {
+		.base	= S5PV210_ETC0_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_ETC0(0),
@@ -406,6 +519,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "ETC0",
 		},
 	}, {
+		.base	= S5PV210_ETC1_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_ETC1(0),
@@ -413,6 +527,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "ETC1",
 		},
 	}, {
+		.base	= S5PV210_ETC2_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_ETC2(0),
@@ -420,6 +535,7 @@ static struct s3c_gpio_chip s5pv210_gpio_4bit[] = {
 			.label	= "ETC2",
 		},
 	}, {
+		.base	= S5PV210_ETC4_BASE,
 		.config	= &gpio_cfg_noint,
 		.chip	= {
 			.base	= S5PV210_ETC4(0),
@@ -659,3 +775,5 @@ __init int s5pv210_gpiolib_init(void)
 
 	return 0;
 }
+
+core_initcall(s5pv210_gpiolib_init);
