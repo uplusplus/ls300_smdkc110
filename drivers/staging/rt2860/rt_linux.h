@@ -39,7 +39,6 @@
 /*    Initial revision                                                 */
 /*                                                                     */
 /***********************************************************************/
-
 #include "rtmp_type.h"
 #include <linux/module.h>
 #include <linux/kernel.h>

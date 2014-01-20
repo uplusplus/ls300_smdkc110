@@ -29,7 +29,6 @@
 #define	__RT_CONFIG_H__
 
 /* #define WDS_VLAN_SUPPORT */
-
 #include "rtmp_comm.h"
 /*#include "rtmp_type.h" */
 /*#include "rtmp_os.h" */
@@ -37,7 +36,6 @@
 #include "rtmp_def.h"
 #include "rtmp_chip.h"
 #include "rtmp_timer.h"
-
 
 #ifdef LINUX
 #ifdef RT_CFG80211_SUPPORT

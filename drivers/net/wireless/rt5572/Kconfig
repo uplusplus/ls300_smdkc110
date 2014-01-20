@@ -1,4 +1,13 @@
-config RT5572
+menuconfig RT5572
 	tristate "Ralink 5572 5370 usb driver support"
 	---help---
 	  Ralink 5572 5370 usb
+
+if RT5572
+
+config RT5370_DBG
+	bool "Verbose debug info."
+	---help---
+	  output extra debug info.
+
+endif # RT5572

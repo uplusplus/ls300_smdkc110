@@ -284,7 +284,7 @@ struct os_cookie {
 	RTMP_NET_TASK_STRUCT	ac2_dma_done_work;
 	RTMP_NET_TASK_STRUCT	ac3_dma_done_work;
 	RTMP_NET_TASK_STRUCT	hcca_dma_done_work;
-	
+
 	RTMP_NET_TASK_STRUCT	tbtt_work;
 
 #else
@@ -312,7 +312,7 @@ struct os_cookie {
 	RTMP_NET_TASK_STRUCT	null_frame_complete_task;
 #if defined(CONFIG_MULTI_CHANNEL) || defined(DOT11Z_TDLS_SUPPORT)
 	RTMP_NET_TASK_STRUCT	hcca_null_frame_complete_task;
-#endif /* defined(CONFIG_MULTI_CHANNEL) || defined(DOT11Z_TDLS_SUPPORT) */	
+#endif /* defined(CONFIG_MULTI_CHANNEL) || defined(DOT11Z_TDLS_SUPPORT) */
 /*	RTMP_NET_TASK_STRUCT	rts_frame_complete_task; */
 	RTMP_NET_TASK_STRUCT	pspoll_frame_complete_task;
 #endif /* RTMP_MAC_USB */
@@ -404,7 +404,7 @@ void linux_pci_unmap_single(void *handle, ra_dma_addr_t dma_addr, size_t size, i
 
 #define PCI_MAP_SINGLE_DEV(_handle, _ptr, _size, _sd_idx, _dir)				\
 	linux_pci_map_single(_handle, _ptr, _size, _sd_idx, _dir)
-	
+
 #define PCI_UNMAP_SINGLE(_pAd, _ptr, _size, _dir)						\
 	linux_pci_unmap_single(((POS_COOKIE)(_pAd->OS_Cookie))->pci_dev, _ptr, _size, _dir)
 
@@ -757,7 +757,7 @@ extern ULONG RtmpOsGetUnalignedlong(
 				else														\
 					PACKET_CB(_p, 11) &= (~RTMP_PACKET_SPECIFIC_LLCSNAP);	\
 			}while(0)
-			
+
 #define RTMP_GET_PACKET_LLCSNAP(_p)		(PACKET_CB(_p, 11) & RTMP_PACKET_SPECIFIC_LLCSNAP)
 
 /* IP */
@@ -768,7 +768,7 @@ extern ULONG RtmpOsGetUnalignedlong(
 				else													\
 					PACKET_CB(_p, 11) &= (~RTMP_PACKET_SPECIFIC_IPV4);	\
 			}while(0)
-			
+
 #define RTMP_GET_PACKET_IPV4(_p)		(PACKET_CB(_p, 11) & RTMP_PACKET_SPECIFIC_IPV4)
 
 /* IP */
@@ -780,7 +780,7 @@ extern ULONG RtmpOsGetUnalignedlong(
 				else													\
 					PACKET_CB(_p, 11) &= (~RTMP_PACKET_SPECIFIC_TDLS);	\
 			}while(0)
-			
+
 #define RTMP_GET_PACKET_TDLS(_p)		(PACKET_CB(_p, 11) & RTMP_PACKET_SPECIFIC_TDLS)
 
 /* If this flag is set, it indicates that this EAPoL frame MUST be clear. */
@@ -835,7 +835,7 @@ extern ULONG RtmpOsGetUnalignedlong(
 				else														\
 					PACKET_CB(_p, 25) &= (~RTMP_TDLS_SPECIFIC_WAIT_ACK);	\
 			}while(0)
-			
+
 #define RTMP_GET_PACKET_TDLS_WAIT_ACK(_p)		(PACKET_CB(_p, 25) & RTMP_TDLS_SPECIFIC_WAIT_ACK)
 
 #define RTMP_SET_PACKET_TDLS_NO_ACK(_p, _flg)						\
@@ -845,7 +845,7 @@ extern ULONG RtmpOsGetUnalignedlong(
 				else													\
 					PACKET_CB(_p, 25) &= (~RTMP_TDLS_SPECIFIC_NOACK);	\
 			}while(0)
-			
+
 #define RTMP_GET_PACKET_TDLS_NO_ACK(_p)		(PACKET_CB(_p, 25) & RTMP_TDLS_SPECIFIC_NOACK)
 
 #define RTMP_SET_TDLS_SPECIFIC_PACKET(_p, _flg)   (PACKET_CB(_p, 25) = _flg)

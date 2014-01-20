@@ -238,10 +238,15 @@ endif
 # config for STA mode
 
 ifeq ($(RT28xx_MODE),STA)
-WFLAGS += -DCONFIG_STA_SUPPORT -DDBG
+WFLAGS += -DCONFIG_STA_SUPPORT
 
 ifeq ($(HAS_XLINK),y)
 WFLAGS += -DXLINK_SUPPORT
+endif
+
+#use Kconfig to config DBG macro
+ifeq ($(CONFIG_RT5370_DBG),y)
+WFLAGS += -DDBG
 endif
 
 
